@@ -7,7 +7,7 @@ import (
 )
 
 // Hello responds with a simple hello world message.
-func Hello(c *gin.Context) {
+func (h *Handler) Hello(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "hello world!",
 	})

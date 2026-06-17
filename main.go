@@ -6,7 +6,9 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/wengti0608/golang-docker-postgres/db"
+	"github.com/wengti0608/golang-docker-postgres/handlers"
 	"github.com/wengti0608/golang-docker-postgres/router"
+	"github.com/wengti0608/golang-docker-postgres/store"
 )
 
 func main() {
@@ -32,6 +34,9 @@ func main() {
 	}
 	log.Println("database schema ready")
 
-	r := router.New()
+	// Wire the layers together: pool -> store -> handlers -> router.
+	s := store.New(pool)
+	h := handlers.New(s)
+	r := router.New(h)
 	r.Run(":8080")
 }
