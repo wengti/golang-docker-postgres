@@ -25,6 +25,13 @@ func main() {
 	defer pool.Close()
 	log.Println("connected to database")
 
+	// Ensure the schema exists before serving traffic. Idempotent, so it is
+	// safe to run on every startup.
+	if err := db.Migrate(context.Background(), pool); err != nil {
+		log.Fatalf("failed to run migrations: %v", err)
+	}
+	log.Println("database schema ready")
+
 	r := router.New()
 	r.Run(":8080")
 }
