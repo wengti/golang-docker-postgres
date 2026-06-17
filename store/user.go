@@ -2,8 +2,13 @@ package store
 
 import (
 	"context"
+	"errors"
 	"time"
 )
+
+// ErrUserNotFound is returned when an operation targets a user id that does not
+// exist. Callers can detect it with errors.Is to map it to a 404 response.
+var ErrUserNotFound = errors.New("user not found")
 
 // User mirrors a row in the users table. The json tags control how it is
 // serialized in API responses.
@@ -60,4 +65,21 @@ func (s *Store) CreateUser(ctx context.Context, name, email string) (User, error
 		return User{}, err
 	}
 	return u, nil
+}
+
+// DeleteUser removes the user with the given id. It returns ErrUserNotFound if
+// no row matched, so the caller can tell "deleted" apart from "did not exist".
+func (s *Store) DeleteUser(ctx context.Context, id int64) error {
+	tag, err := s.pool.Exec(ctx, `DELETE FROM users WHERE id = $1`, id)
+	if err != nil {
+		return err
+	}
+
+	// Exec succeeds even when it matches zero rows, so inspect how many rows
+	// were actually affected to detect a missing id.
+	if tag.RowsAffected() == 0 {
+		return ErrUserNotFound
+	}
+
+	return nil
 }
