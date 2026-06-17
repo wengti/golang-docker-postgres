@@ -11,6 +11,7 @@ func New(h *handlers.Handler) *gin.Engine {
 
 	r.GET("/", h.Hello)
 	r.POST("/users", h.CreateUser)
+	r.GET("/users", h.ListUsers)
 
 	return r
 }

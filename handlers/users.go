@@ -31,3 +31,14 @@ func (h *Handler) CreateUser(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, user)
 }
+
+// ListUsers handles GET /users: return all users.
+func (h *Handler) ListUsers(c *gin.Context) {
+	users, err := h.store.ListUsers(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not list users"})
+		return
+	}
+
+	c.JSON(http.StatusOK, users)
+}
