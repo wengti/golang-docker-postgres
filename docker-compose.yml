@@ -15,5 +15,23 @@ services:
       timeout: 5s
       retries: 5
 
+  api:
+    build: .
+    container_name: golang-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Inside the Docker network the app reaches Postgres by the service name
+      # "db" on its own port 5432 — NOT localhost / the host-mapped port.
+      DB_HOST: db
+      POSTGRES_PORT: 5432
+    ports:
+      - "8080:8080"
+    depends_on:
+      # Wait until Postgres passes its healthcheck before starting the API.
+      db:
+        condition: service_healthy
+
 volumes:
   pgdata:

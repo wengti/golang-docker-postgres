@@ -1,0 +1,11 @@
+# Keep the build context small and avoid copying secrets/artifacts into the image.
+.git
+.gitignore
+tmp/
+*.log
+.env
+.env.example
+.air.toml
+README.md
+Dockerfile
+.dockerignore
