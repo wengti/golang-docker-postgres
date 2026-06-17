@@ -28,6 +28,10 @@ func (h *Handler) CreateUser(c *gin.Context) {
 
 	user, err := h.store.CreateUser(c.Request.Context(), req.Name, req.Email)
 	if err != nil {
+		if errors.Is(err, store.ErrEmailExists) {
+			c.JSON(http.StatusConflict, gin.H{"error": "email already exists"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create user"})
 		return
 	}

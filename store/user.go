@@ -4,11 +4,21 @@ import (
 	"context"
 	"errors"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // ErrUserNotFound is returned when an operation targets a user id that does not
 // exist. Callers can detect it with errors.Is to map it to a 404 response.
 var ErrUserNotFound = errors.New("user not found")
+
+// ErrEmailExists is returned by CreateUser when the email already exists,
+// violating the unique constraint. Callers can map it to a 409 response.
+var ErrEmailExists = errors.New("email already exists")
+
+// pgUniqueViolation is the PostgreSQL SQLSTATE code for a unique-constraint
+// violation. See https://www.postgresql.org/docs/current/errcodes-appendix.html
+const pgUniqueViolation = "23505"
 
 // User mirrors a row in the users table. The json tags control how it is
 // serialized in API responses.
@@ -62,6 +72,12 @@ func (s *Store) CreateUser(ctx context.Context, name, email string) (User, error
 		name, email,
 	).Scan(&u.ID, &u.Name, &u.Email, &u.CreatedAt)
 	if err != nil {
+		// Translate a unique-constraint violation on email into a domain error
+		// the caller can recognize, instead of leaking the raw pgx error.
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == pgUniqueViolation {
+			return User{}, ErrEmailExists
+		}
 		return User{}, err
 	}
 	return u, nil
